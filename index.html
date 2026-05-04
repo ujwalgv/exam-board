@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Code Craft Club | Student Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Inter", sans-serif;
+        background-color: #e8e6e1;
+        color: #1a1a1a;
+        overflow-x: hidden;
+      }
+    </style>
+  </head>
+  <body class="min-h-screen flex items-center justify-center p-4 md:p-8">
+    <!-- Big Modal Container -->
+    <main
+      class="w-full max-w-5xl bg-white rounded-[3rem] shadow-2xl overflow-hidden flex flex-col md:flex-row min-h-[600px] relative"
+    >
+      <!-- Left Side: Branding & Heading -->
+      <section
+        class="w-full md:w-5/12 bg-[#1a1a1a] text-white p-10 md:p-14 flex flex-col justify-between relative overflow-hidden"
+      >
+        <!-- Subtle background accent -->
+        <div
+          class="absolute -top-32 -left-32 w-96 h-96 bg-[#7a8b76] rounded-full mix-blend-screen filter blur-[100px] opacity-40"
+        ></div>
+
+        <div class="relative z-10">
+          <!-- Logo -->
+          <div class="flex items-center space-x-3 mb-16">
+            <div
+              class="w-10 h-10 bg-[#7a8b76] rounded-full flex items-center justify-center text-white shadow-lg shadow-[#7a8b76]/30"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="m18 16 4-4-4-4" />
+                <path d="m6 8-4 4 4 4" />
+                <path d="m14.5 4-5 16" />
+              </svg>
+            </div>
+            <span class="font-bold text-xl tracking-wide">Code Craft Club</span>
+          </div>
+
+          <!-- Main Heading -->
+          <h1
+            class="text-5xl md:text-6xl font-extrabold leading-[1.1] tracking-tight mb-6"
+          >
+            Ready to<br />Code?
+          </h1>
+          <p class="text-gray-400 text-lg leading-relaxed max-w-sm">
+            Enter your details to access your secure exam sandbox. Good luck!
+          </p>
+        </div>
+
+        <!-- Bottom Note -->
+        <div
+          class="relative z-10 mt-12 md:mt-0 text-sm text-gray-500 font-medium"
+        >
+          © 2026 Code Craft Club
+        </div>
+      </section>
+
+      <!-- Right Side: Form -->
+      <section
+        class="w-full md:w-7/12 p-10 md:p-16 lg:p-24 flex flex-col justify-center bg-[#f8f7f4]"
+      >
+        <h2 class="text-3xl font-extrabold mb-8 text-[#1a1a1a]">Join Exam</h2>
+
+        <div class="space-y-6">
+          <!-- Error Message Banner -->
+          <div
+            id="errorMsg"
+            class="hidden bg-red-100 text-red-700 px-5 py-4 rounded-2xl font-semibold text-sm border border-red-200 flex items-center"
+          >
+            <svg
+              class="w-5 h-5 mr-2 shrink-0"
+              fill="currentColor"
+              viewBox="0 0 20 20"
+            >
+              <path
+                fill-rule="evenodd"
+                d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                clip-rule="evenodd"
+              ></path>
+            </svg>
+            <span id="errorText">Invalid Exam Code.</span>
+          </div>
+
+          <!-- Input Fields -->
+          <div>
+            <label
+              class="block text-sm font-extrabold text-gray-700 mb-2 uppercase tracking-wide"
+              >Student Name</label
+            >
+            <input
+              type="text"
+              id="studentNameInput"
+              placeholder="e.g. Jane Doe"
+              class="w-full bg-white px-6 py-4 rounded-2xl border border-gray-200 focus:border-[#7a8b76] focus:ring-4 focus:ring-[#7a8b76]/10 outline-none text-lg font-medium transition-all shadow-sm"
+            />
+          </div>
+
+          <div>
+            <label
+              class="block text-sm font-extrabold text-gray-700 mb-2 uppercase tracking-wide"
+              >Exam Join Code</label
+            >
+            <input
+              type="text"
+              id="joinCodeInput"
+              placeholder="e.g. JAVA101"
+              class="w-full bg-white px-6 py-4 rounded-2xl border border-gray-200 focus:border-[#7a8b76] focus:ring-4 focus:ring-[#7a8b76]/10 outline-none text-lg font-medium uppercase transition-all shadow-sm"
+            />
+          </div>
+
+          <!-- Action Button -->
+          <button
+            onclick="joinExam()"
+            id="joinBtn"
+            class="w-full bg-[#1a1a1a] text-white font-bold text-lg px-6 py-5 rounded-2xl hover:bg-[#7a8b76] transition-all duration-300 shadow-xl shadow-black/10 mt-4 flex justify-center items-center group"
+          >
+            <span>Enter Exam Room</span>
+            <svg
+              class="w-5 h-5 ml-2 transform group-hover:translate-x-1 transition-transform"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2.5"
+                d="M14 5l7 7m0 0l-7 7m7-7H3"
+              ></path>
+            </svg>
+          </button>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      // --- SUPABASE CONFIGURATION ---
+      const SUPABASE_URL = "https://jkiiclkwhkfooiagmirm.supabase.co"; // e.g., https://xyz.supabase.co
+      const SUPABASE_ANON_KEY =
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpraWljbGt3aGtmb29pYWdtaXJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3MDE4MjMsImV4cCI6MjA5MzI3NzgyM30.SsAojsPLoG8m88gHvBlPUf_H1kgsclD1nHK0yNSemWI";
+
+      const supabaseClient = window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_ANON_KEY,
+      );
+
+      function showError(message) {
+        const errDiv = document.getElementById("errorMsg");
+        document.getElementById("errorText").innerText = message;
+        errDiv.classList.remove("hidden");
+      }
+
+      async function joinExam() {
+        const nameInput = document
+          .getElementById("studentNameInput")
+          .value.trim();
+        const codeInput = document
+          .getElementById("joinCodeInput")
+          .value.trim()
+          .toUpperCase();
+        const btn = document.getElementById("joinBtn");
+        const errorMsg = document.getElementById("errorMsg");
+
+        if (!nameInput) return showError("Please enter your full name.");
+        if (!codeInput) return showError("Please enter the exam code.");
+
+        if (SUPABASE_URL === "YOUR_SUPABASE_PROJECT_URL") {
+          alert("Please add your Supabase Keys in the HTML file first!");
+          return;
+        }
+
+        btn.innerText = "Searching Room...";
+        btn.disabled = true;
+        errorMsg.classList.add("hidden");
+
+        try {
+          const { data, error } = await supabaseClient
+            .from("exams")
+            .select("id, join_code")
+            .eq("join_code", codeInput)
+            .single();
+
+          if (error || !data)
+            throw new Error(
+              "Invalid Exam Code. Please verify with your instructor.",
+            );
+
+          // Redirect with BOTH exam ID and student name encoded
+          window.location.href = `exam.html?exam_id=${data.id}&student_name=${encodeURIComponent(nameInput)}`;
+        } catch (err) {
+          showError(err.message);
+          btn.innerHTML = `<span>Enter Exam Room</span><svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>`;
+          btn.disabled = false;
+        }
+      }
+    </script>
+  </body>
+</html>
