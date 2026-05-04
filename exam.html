@@ -307,10 +307,9 @@
 
     <script>
       // --- SUPABASE CONFIGURATION ---
-      const SUPABASE_URL = "https://jkiiclkwhkfooiagmirm.supabase.co"; // e.g., https://xyz.supabase.co
+      const SUPABASE_URL = "https://jkiiclkwhkfooiagmirm.supabase.co";
       const SUPABASE_ANON_KEY =
         "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpraWljbGt3aGtmb29pYWdtaXJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3MDE4MjMsImV4cCI6MjA5MzI3NzgyM30.SsAojsPLoG8m88gHvBlPUf_H1kgsclD1nHK0yNSemWI";
-
       const supabaseClient = window.supabase.createClient(
         SUPABASE_URL,
         SUPABASE_ANON_KEY,
@@ -509,11 +508,6 @@
         consoleEl.innerText = "Running code and verifying test cases...\n";
 
         try {
-          const apiKey = "AIzaSyA4l2ERAJXSxrPJ-PBArjP3pFhDk8NyiBA";
-          const modelToUse = apiKey
-            ? "gemini-2.5-flash"
-            : "gemini-2.5-flash-preview-09-2025";
-
           const codePhrasesStr =
             qData.required_code_phrases?.join(", ") || "None required";
           const outputPhrasesStr =
@@ -524,7 +518,6 @@
 You are evaluating a student's Java code for an exam.
 Question Title: ${qData.title}
 Question Description: ${qData.description}
-
 
 Student's Submitted Code:
 \`\`\`java
@@ -538,23 +531,17 @@ Rule 3: If there is a logical error (e.g., fails for a specific edge case or con
 Rule 4: If a required phrase is missing, reply strictly with "FAILED: Missing required code construct."
 Do NOT provide hints, corrected code, or explanations.`;
 
-          const res = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/${modelToUse}:generateContent?key=${apiKey}`,
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                contents: [{ parts: [{ text: prompt }] }],
-              }),
-            },
-          );
+          // SECURE CALL: Sending prompt to Vercel Backend
+          const res = await fetch("/api/evaluate", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ prompt: prompt }),
+          });
 
           if (!res.ok) throw new Error(`Server Error: ${res.status}`);
 
           const data = await res.json();
-          const resultText =
-            data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ||
-            "FAILED: Unable to evaluate.";
+          const resultText = data.result || "FAILED: Unable to evaluate.";
 
           consoleEl.innerText += "\n[EVALUATION RESULT]\n" + resultText;
 
@@ -663,11 +650,6 @@ Do NOT provide hints, corrected code, or explanations.`;
       }
 
       async function generateFinalReport(timeTakenSec) {
-        const apiKey = "AIzaSyA4l2ERAJXSxrPJ-PBArjP3pFhDk8NyiBA";
-        const modelToUse = apiKey
-          ? "gemini-2.5-flash"
-          : "gemini-2.5-flash-preview-09-2025";
-
         // Prepare breakdown of attempts
         let breakdown = [];
         for (let id in examStats.questionsData) {
@@ -697,32 +679,16 @@ You must respond ONLY with a valid JSON object matching this schema. Do not use 
 }`;
 
         try {
-          const res = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/${modelToUse}:generateContent?key=${apiKey}`,
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                contents: [{ parts: [{ text: prompt }] }],
-                generationConfig: {
-                  responseMimeType: "application/json",
-                  responseSchema: {
-                    type: "OBJECT",
-                    properties: {
-                      score: { type: "NUMBER" },
-                      feedback: { type: "STRING" },
-                    },
-                    required: ["score", "feedback"],
-                  },
-                },
-              }),
-            },
-          );
+          // SECURE CALL: Sending prompt to Vercel Backend
+          const res = await fetch("/api/report", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ prompt: prompt }),
+          });
 
-          const data = await res.json();
-          const evalResult = JSON.parse(
-            data.candidates[0].content.parts[0].text,
-          );
+          if (!res.ok) throw new Error("Failed to fetch report from server.");
+
+          const evalResult = await res.json();
 
           // Update UI with results
           document.getElementById("evaluationScore").innerText =
