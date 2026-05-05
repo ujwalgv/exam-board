@@ -1,438 +1,270 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Code Craft Club | Active Exam</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js"></script>
-    <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
-      rel="stylesheet"
-    />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-      body {
-        font-family: "Inter", sans-serif;
-        background-color: #f8f7f4;
-        color: #1a1a1a;
-        overflow-x: hidden;
-      }
-      .monaco-container {
-        height: 300px;
-        width: 100%;
-        border-radius: 1rem;
-        overflow: hidden;
-        border: 1px solid #e5e7eb;
-      }
-      .blur-bg {
-        filter: blur(6px);
-        pointer-events: none;
-        user-select: none;
-        transition: filter 0.3s;
-      }
+        body { font-family: 'Inter', sans-serif; background-color: #f8f7f4; color: #1a1a1a; overflow-x: hidden; }
+        .monaco-container { height: 300px; width: 100%; border-radius: 1rem; overflow: hidden; border: 1px solid #e5e7eb; }
+        .blur-bg { filter: blur(6px); pointer-events: none; user-select: none; transition: filter 0.3s; }
+        
+        /* Custom Radio Button Styles */
+        input[type="radio"]:checked + div { border-color: #7a8b76; background-color: #f4f6f3; }
+        input[type="radio"]:checked + div span { color: #7a8b76; font-weight: bold; }
     </style>
-  </head>
-  <body class="min-h-screen flex flex-col pb-20 relative">
+</head>
+<body class="min-h-screen flex flex-col pb-20 relative">
+
     <!-- Instructions Pre-Exam Modal -->
-    <div
-      id="instructionsModal"
-      class="fixed inset-0 bg-[#1a1a1a]/40 backdrop-blur-sm z-[150] flex items-center justify-center p-4"
-    >
-      <div
-        class="bg-white rounded-[2rem] shadow-2xl max-w-2xl w-full p-8 md:p-12 transform transition-all border border-gray-100"
-      >
-        <div
-          class="w-16 h-16 bg-[#7a8b76]/10 text-[#7a8b76] rounded-full flex items-center justify-center mb-6"
-        >
-          <svg
-            class="w-8 h-8"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2.5"
-              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-            ></path>
-          </svg>
+    <div id="instructionsModal" class="fixed inset-0 bg-[#1a1a1a]/40 backdrop-blur-sm z-[150] flex items-center justify-center p-4">
+        <div class="bg-white rounded-[2rem] shadow-2xl max-w-2xl w-full p-8 md:p-12 transform transition-all border border-gray-100">
+            <div class="w-16 h-16 bg-[#7a8b76]/10 text-[#7a8b76] rounded-full flex items-center justify-center mb-6">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            </div>
+            <h2 class="text-3xl font-extrabold mb-4">Exam Instructions</h2>
+            <p class="text-gray-600 mb-8 font-medium">Please read the following rules carefully before the timer begins.</p>
+            
+            <ul class="space-y-5 mb-10">
+                <li class="flex items-start bg-gray-50 p-4 rounded-2xl">
+                    <span class="text-[#7a8b76] mr-3 mt-0.5 text-lg">⏱</span>
+                    <span class="text-gray-700 text-sm leading-relaxed"><strong>Time Limit:</strong> You must complete all questions before the timer reaches zero. It will auto-submit upon expiry.</span>
+                </li>
+                <li class="flex items-start bg-gray-50 p-4 rounded-2xl">
+                    <span class="text-[#7a8b76] mr-3 mt-0.5 text-lg">💡</span>
+                    <span class="text-gray-700 text-sm leading-relaxed"><strong>Execution & Scoring:</strong> Use "Evaluate Answer" to test your logic/choice. The system will calculate your final score out of 10 based on how few evaluation attempts you take to pass.</span>
+                </li>
+                
+                <!-- Anti-Cheat Rule (Hidden dynamically if disabled by admin) -->
+                <li id="antiCheatRule" class="flex items-start bg-red-50 p-4 rounded-2xl border border-red-100">
+                    <span class="text-red-500 mr-3 mt-0.5 text-lg">⚠</span>
+                    <span class="text-gray-700 text-sm leading-relaxed"><strong>Anti-Cheating Enabled:</strong> Do NOT switch tabs, minimize the browser, or click outside the window. 3 strikes will force-submit your exam automatically.</span>
+                </li>
+            </ul>
+            
+            <button onclick="beginExam()" class="w-full bg-[#1a1a1a] text-white font-bold text-lg px-6 py-4 rounded-2xl hover:bg-[#7a8b76] transition-all shadow-lg flex justify-center items-center group">
+                <span>I Understand, Start Exam</span>
+                <svg class="w-5 h-5 ml-2 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+            </button>
         </div>
-        <h2 class="text-3xl font-extrabold mb-4">Exam Instructions</h2>
-        <p class="text-gray-600 mb-8 font-medium">
-          Please read the following rules carefully before the timer begins.
-        </p>
-
-        <ul class="space-y-5 mb-10">
-          <li class="flex items-start bg-gray-50 p-4 rounded-2xl">
-            <span class="text-[#7a8b76] mr-3 mt-0.5 text-lg">⏱</span>
-            <span class="text-gray-700 text-sm leading-relaxed"
-              ><strong>Time Limit:</strong> You must complete all questions
-              before the timer reaches zero. It will auto-submit upon
-              expiry.</span
-            >
-          </li>
-          <li class="flex items-start bg-gray-50 p-4 rounded-2xl">
-            <span class="text-[#7a8b76] mr-3 mt-0.5 text-lg">💡</span>
-            <span class="text-gray-700 text-sm leading-relaxed"
-              ><strong>Execution & Scoring:</strong> Use "Run & Evaluate" to
-              compile and test your code against required test cases. The system
-              will calculate your final score out of 10 based on how few
-              evaluation attempts you take to pass.</span
-            >
-          </li>
-          <li
-            class="flex items-start bg-red-50 p-4 rounded-2xl border border-red-100"
-          >
-            <span class="text-red-500 mr-3 mt-0.5 text-lg">⚠</span>
-            <span class="text-gray-700 text-sm leading-relaxed"
-              ><strong>Anti-Cheating Enabled:</strong> Do NOT switch tabs,
-              minimize the browser, or click outside the window. 3 strikes will
-              force-submit your exam automatically.</span
-            >
-          </li>
-        </ul>
-
-        <button
-          onclick="beginExam()"
-          class="w-full bg-[#1a1a1a] text-white font-bold text-lg px-6 py-4 rounded-2xl hover:bg-[#7a8b76] transition-all shadow-lg flex justify-center items-center group"
-        >
-          <span>I Understand, Start Exam</span>
-          <svg
-            class="w-5 h-5 ml-2 transform group-hover:translate-x-1 transition-transform"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2.5"
-              d="M14 5l7 7m0 0l-7 7m7-7H3"
-            ></path>
-          </svg>
-        </button>
-      </div>
     </div>
 
     <!-- Active Exam Interface -->
-    <main
-      id="examContainer"
-      class="flex-grow w-full max-w-5xl mx-auto px-4 sm:px-6 py-6 blur-bg"
-    >
-      <!-- Exam Header Sticky -->
-      <div
-        class="sticky top-4 bg-white/95 backdrop-blur-md p-5 md:p-6 rounded-[2rem] shadow-sm border border-gray-200 z-50 flex flex-col md:flex-row justify-between items-center mb-10 gap-4"
-      >
-        <!-- Student Info & Progress -->
-        <div class="flex items-center space-x-4 w-full md:w-auto">
-          <div
-            class="hidden md:flex w-12 h-12 bg-[#7a8b76] rounded-full text-white items-center justify-center font-extrabold text-xl shadow-inner"
-            id="avatarInitial"
-          >
-            S
-          </div>
-          <div>
-            <h2 id="headerStudentName" class="text-xl font-bold text-[#1a1a1a]">
-              Loading...
-            </h2>
-            <p
-              id="liveExamProgress"
-              class="text-[#7a8b76] text-sm font-semibold tracking-wide"
-            >
-              0 / 0 Passed
-            </p>
-          </div>
+    <main id="examContainer" class="flex-grow w-full max-w-5xl mx-auto px-4 sm:px-6 py-6 blur-bg">
+        <!-- Exam Header Sticky -->
+        <div class="sticky top-4 bg-white/95 backdrop-blur-md p-5 md:p-6 rounded-[2rem] shadow-sm border border-gray-200 z-50 flex flex-col md:flex-row justify-between items-center mb-10 gap-4">
+            
+            <!-- Student Info & Progress -->
+            <div class="flex items-center space-x-4 w-full md:w-auto">
+                <div class="hidden md:flex w-12 h-12 bg-[#7a8b76] rounded-full text-white items-center justify-center font-extrabold text-xl shadow-inner" id="avatarInitial">S</div>
+                <div>
+                    <h2 id="headerStudentName" class="text-xl font-bold text-[#1a1a1a]">Loading...</h2>
+                    <p id="liveExamProgress" class="text-[#7a8b76] text-sm font-semibold tracking-wide">0 / 0 Passed</p>
+                </div>
+            </div>
+            
+            <!-- Exam Title (Centered on desktop) -->
+            <div class="hidden lg:block absolute left-1/2 transform -translate-x-1/2 text-center bg-gray-100 px-6 py-2 rounded-full">
+                <h3 id="liveExamTitle" class="text-sm font-bold text-gray-700 tracking-wider uppercase">Exam Title</h3>
+            </div>
+
+            <!-- Timer & Action -->
+            <div class="flex items-center justify-between w-full md:w-auto space-x-6">
+                <div class="text-right">
+                    <span class="block text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-0.5">Time Left</span>
+                    <span id="examTimer" class="text-2xl font-mono font-extrabold text-[#1a1a1a] tabular-nums">--:--:--</span>
+                </div>
+                <button onclick="submitFinalExam()" class="bg-red-50 text-red-600 border border-red-200 px-6 py-3 rounded-full font-bold hover:bg-red-100 transition-colors shrink-0 shadow-sm">
+                    Finish Test
+                </button>
+            </div>
         </div>
 
-        <!-- Exam Title (Centered on desktop) -->
-        <div
-          class="hidden lg:block absolute left-1/2 transform -translate-x-1/2 text-center bg-gray-100 px-6 py-2 rounded-full"
-        >
-          <h3
-            id="liveExamTitle"
-            class="text-sm font-bold text-gray-700 tracking-wider uppercase"
-          >
-            Exam Title
-          </h3>
+        <div id="questionsContainer" class="space-y-10">
+            <!-- Questions injected here -->
         </div>
-
-        <!-- Timer & Action -->
-        <div
-          class="flex items-center justify-between w-full md:w-auto space-x-6"
-        >
-          <div class="text-right">
-            <span
-              class="block text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-0.5"
-              >Time Left</span
-            >
-            <span
-              id="examTimer"
-              class="text-2xl font-mono font-extrabold text-[#1a1a1a] tabular-nums"
-              >--:--:--</span
-            >
-          </div>
-          <button
-            onclick="submitFinalExam()"
-            class="bg-red-50 text-red-600 border border-red-200 px-6 py-3 rounded-full font-bold hover:bg-red-100 transition-colors shrink-0 shadow-sm"
-          >
-            Finish Test
-          </button>
-        </div>
-      </div>
-
-      <div id="questionsContainer" class="space-y-10">
-        <!-- Questions injected here -->
-      </div>
     </main>
 
     <!-- Results Modal (Hidden by Default) -->
-    <div
-      id="resultsOverlay"
-      class="fixed inset-0 bg-[#f8f7f4] z-[200] hidden flex items-center justify-center p-4 overflow-y-auto"
-    >
-      <div
-        class="bg-white p-8 md:p-12 rounded-[3rem] shadow-2xl border border-gray-100 max-w-2xl w-full my-8 relative overflow-hidden"
-      >
-        <!-- Loading State for Final Evaluation -->
-        <div id="resultsLoadingState" class="text-center py-16">
-          <div
-            class="inline-block animate-spin rounded-full h-16 w-16 border-4 border-gray-100 border-t-[#7a8b76] mb-6"
-          ></div>
-          <h3 class="text-3xl font-extrabold text-[#1a1a1a] mb-2">
-            Generating Performance Report...
-          </h3>
-          <p class="text-gray-500 font-medium">
-            Evaluating your logic, coding efficiency, and test outcomes.
-          </p>
+    <div id="resultsOverlay" class="fixed inset-0 bg-[#f8f7f4] z-[200] hidden flex items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-white p-8 md:p-12 rounded-[3rem] shadow-2xl border border-gray-100 max-w-2xl w-full my-8 relative overflow-hidden">
+            
+            <!-- Loading State for Final Evaluation -->
+            <div id="resultsLoadingState" class="text-center py-16">
+                <div class="inline-block animate-spin rounded-full h-16 w-16 border-4 border-gray-100 border-t-[#7a8b76] mb-6"></div>
+                <h3 class="text-3xl font-extrabold text-[#1a1a1a] mb-2">Generating Performance Report...</h3>
+                <p class="text-gray-500 font-medium">Evaluating your logic, coding efficiency, and test outcomes.</p>
+            </div>
+
+            <!-- Final Report UI -->
+            <div id="resultsFinalUI" class="hidden">
+                <div class="text-center mb-10">
+                    <h2 class="text-4xl font-extrabold mb-3 text-[#1a1a1a]">Exam Complete!</h2>
+                    <p class="text-gray-600 font-medium">Here is your automated performance report.</p>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    <div class="bg-[#f4f3ef] rounded-3xl p-6 flex flex-col items-center justify-center text-center border border-gray-200">
+                        <span class="text-gray-500 font-bold text-xs uppercase tracking-widest mb-3">Evaluation Score</span>
+                        <div class="text-6xl font-black text-[#7a8b76] tracking-tighter">
+                            <span id="evaluationScore">--</span><span class="text-3xl text-gray-400">/10</span>
+                        </div>
+                    </div>
+                    <div class="bg-[#f4f3ef] rounded-3xl p-6 flex flex-col justify-center space-y-4 border border-gray-200">
+                        <div class="flex justify-between items-center border-b border-gray-200 pb-3">
+                            <span class="text-gray-600 font-semibold text-sm">Tests Passed</span>
+                            <span id="resultScore" class="font-bold text-[#1a1a1a] text-lg">0/0</span>
+                        </div>
+                        <div class="flex justify-between items-center border-b border-gray-200 pb-3">
+                            <span class="text-gray-600 font-semibold text-sm">Time Taken</span>
+                            <span id="resultTime" class="font-bold text-[#1a1a1a] text-lg">00:00</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600 font-semibold text-sm">Warnings Issued</span>
+                            <span id="resultWarnings" class="font-bold text-red-600 text-lg">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-blue-50 border border-blue-200 rounded-3xl p-8 mb-8 relative mt-10">
+                    <div class="absolute -top-4 left-6 bg-blue-600 text-white text-xs font-bold px-4 py-1.5 rounded-full flex items-center shadow-md uppercase tracking-wider">
+                        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg>
+                        Evaluation Feedback
+                    </div>
+                    <p id="feedbackText" class="text-gray-800 font-medium leading-relaxed mt-2 text-[15px]">
+                        Loading personalized feedback based on your performance...
+                    </p>
+                </div>
+
+                <button onclick="window.location.href='index.html'" class="w-full bg-[#1a1a1a] text-white px-8 py-5 rounded-2xl font-bold text-lg hover:bg-black transition-colors shadow-xl flex justify-center items-center">
+                    Return to Home
+                </button>
+            </div>
         </div>
-
-        <!-- Final Report UI -->
-        <div id="resultsFinalUI" class="hidden">
-          <div class="text-center mb-10">
-            <h2 class="text-4xl font-extrabold mb-3 text-[#1a1a1a]">
-              Exam Complete!
-            </h2>
-            <p class="text-gray-600 font-medium">
-              Here is your automated performance report.
-            </p>
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-            <div
-              class="bg-[#f4f3ef] rounded-3xl p-6 flex flex-col items-center justify-center text-center border border-gray-200"
-            >
-              <span
-                class="text-gray-500 font-bold text-xs uppercase tracking-widest mb-3"
-                >Evaluation Score</span
-              >
-              <div class="text-6xl font-black text-[#7a8b76] tracking-tighter">
-                <span id="evaluationScore">--</span
-                ><span class="text-3xl text-gray-400">/10</span>
-              </div>
-            </div>
-            <div
-              class="bg-[#f4f3ef] rounded-3xl p-6 flex flex-col justify-center space-y-4 border border-gray-200"
-            >
-              <div
-                class="flex justify-between items-center border-b border-gray-200 pb-3"
-              >
-                <span class="text-gray-600 font-semibold text-sm"
-                  >Tests Passed</span
-                >
-                <span id="resultScore" class="font-bold text-[#1a1a1a] text-lg"
-                  >0/0</span
-                >
-              </div>
-              <div
-                class="flex justify-between items-center border-b border-gray-200 pb-3"
-              >
-                <span class="text-gray-600 font-semibold text-sm"
-                  >Time Taken</span
-                >
-                <span id="resultTime" class="font-bold text-[#1a1a1a] text-lg"
-                  >00:00</span
-                >
-              </div>
-              <div class="flex justify-between items-center">
-                <span class="text-gray-600 font-semibold text-sm"
-                  >Warnings Issued</span
-                >
-                <span id="resultWarnings" class="font-bold text-red-600 text-lg"
-                  >0</span
-                >
-              </div>
-            </div>
-          </div>
-
-          <div
-            class="bg-blue-50 border border-blue-200 rounded-3xl p-8 mb-8 relative mt-10"
-          >
-            <div
-              class="absolute -top-4 left-6 bg-blue-600 text-white text-xs font-bold px-4 py-1.5 rounded-full flex items-center shadow-md uppercase tracking-wider"
-            >
-              <svg
-                class="w-4 h-4 mr-1.5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
-                ></path>
-              </svg>
-              Evaluation Feedback
-            </div>
-            <p
-              id="feedbackText"
-              class="text-gray-800 font-medium leading-relaxed mt-2 text-[15px]"
-            >
-              Loading personalized feedback based on your performance...
-            </p>
-          </div>
-
-          <button
-            onclick="window.location.href = 'index.html'"
-            class="w-full bg-[#1a1a1a] text-white px-8 py-5 rounded-2xl font-bold text-lg hover:bg-black transition-colors shadow-xl flex justify-center items-center"
-          >
-            Return to Home
-          </button>
-        </div>
-      </div>
     </div>
 
     <script>
-      // --- SUPABASE CONFIGURATION ---
-      const SUPABASE_URL = "https://jkiiclkwhkfooiagmirm.supabase.co";
-      const SUPABASE_ANON_KEY =
-        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpraWljbGt3aGtmb29pYWdtaXJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3MDE4MjMsImV4cCI6MjA5MzI3NzgyM30.SsAojsPLoG8m88gHvBlPUf_H1kgsclD1nHK0yNSemWI";
-      const supabaseClient = window.supabase.createClient(
-        SUPABASE_URL,
-        SUPABASE_ANON_KEY,
-      );
+        // --- CONFIGURATION ---
+        let supabaseClient;
+        
+        // State variables
+        let examStats = {
+            studentName: "Student",
+            timeLimitMinutes: 0,
+            startTime: null,
+            totalQuestions: 0,
+            passedQuestions: 0,
+            warningCount: 0,
+            antiCheatEnabled: true,
+            questionsData: {} 
+        };
+        const MAX_WARNINGS = 3;
+        window.monacoEditors = {};
+        let examTimerInterval;
 
-      // State variables
-      let examStats = {
-        studentName: "Student",
-        timeLimitMinutes: 0,
-        startTime: null,
-        totalQuestions: 0,
-        passedQuestions: 0,
-        warningCount: 0,
-        questionsData: {},
-      };
-      const MAX_WARNINGS = 3;
-      window.monacoEditors = {};
-      let examTimerInterval;
+        window.onload = async () => {
+            const params = new URLSearchParams(window.location.search);
+            const examId = params.get('exam_id');
+            const studentName = params.get('student_name');
 
-      window.onload = async () => {
-        const params = new URLSearchParams(window.location.search);
-        const examId = params.get("exam_id");
-        const studentName = params.get("student_name");
+            if (!examId || !studentName) {
+                alert("Missing exam details. Returning home.");
+                window.location.href = "index.html";
+                return;
+            }
 
-        if (!examId || !studentName) {
-          alert("Missing exam details. Returning home.");
-          window.location.href = "index.html";
-          return;
+            try {
+                const configResponse = await fetch('/api/config');
+                if (!configResponse.ok) throw new Error("Failed to load environment configuration");
+                const config = await configResponse.json();
+                supabaseClient = window.supabase.createClient(config.SUPABASE_URL, config.SUPABASE_ANON_KEY);
+            } catch (e) {
+                alert("Application failed to initialize securely.");
+                return;
+            }
+
+            examStats.studentName = studentName;
+            document.getElementById('headerStudentName').innerText = studentName;
+            document.getElementById('avatarInitial').innerText = studentName.charAt(0).toUpperCase();
+
+            // Fetch Exam details
+            const { data: examData, error: examError } = await supabaseClient.from('exams').select('*').eq('id', examId).single();
+            if (examError || !examData) { alert("Exam not found!"); return; }
+
+            document.getElementById('liveExamTitle').innerText = examData.title;
+            examStats.timeLimitMinutes = examData.time_limit_minutes;
+            
+            // Anti-Cheat Setting
+            examStats.antiCheatEnabled = examData.anti_cheat_enabled !== false; 
+            if (!examStats.antiCheatEnabled) {
+                document.getElementById('antiCheatRule').classList.add('hidden');
+            }
+            
+            const h = Math.floor(examData.time_limit_minutes / 60).toString().padStart(2, '0');
+            const m = (examData.time_limit_minutes % 60).toString().padStart(2, '0');
+            document.getElementById('examTimer').innerText = `${h}:${m}:00`;
+
+            // Fetch Questions
+            const { data: questions, error: qError } = await supabaseClient.from('questions').select('*').eq('exam_id', examId);
+            if (!questions || questions.length === 0) {
+                document.getElementById('questionsContainer').innerHTML = "<p class='text-center mt-10 text-gray-500'>No questions found in this exam.</p>";
+                document.getElementById('instructionsModal').classList.add('hidden'); 
+                document.getElementById('examContainer').classList.remove('blur-bg');
+                return;
+            }
+
+            examStats.totalQuestions = questions.length;
+            document.getElementById('liveExamProgress').innerText = `0 / ${questions.length} Passed`;
+
+            renderQuestions(questions);
+        };
+
+        function beginExam() {
+            document.getElementById('instructionsModal').classList.add('hidden');
+            document.getElementById('examContainer').classList.remove('blur-bg');
+            
+            examStats.startTime = Date.now();
+            startTimer(examStats.timeLimitMinutes);
         }
 
-        examStats.studentName = studentName;
-        document.getElementById("headerStudentName").innerText = studentName;
-        document.getElementById("avatarInitial").innerText = studentName
-          .charAt(0)
-          .toUpperCase();
-
-        // Fetch Exam details
-        const { data: examData, error: examError } = await supabaseClient
-          .from("exams")
-          .select("*")
-          .eq("id", examId)
-          .single();
-        if (examError || !examData) {
-          alert("Exam not found!");
-          return;
+        function startTimer(minutes) {
+            let totalSeconds = minutes * 60;
+            const timerEl = document.getElementById('examTimer');
+            
+            examTimerInterval = setInterval(() => {
+                if (totalSeconds <= 0) {
+                    clearInterval(examTimerInterval);
+                    submitFinalExam();
+                    return;
+                }
+                totalSeconds--;
+                const h = Math.floor(totalSeconds / 3600).toString().padStart(2, '0');
+                const m = Math.floor((totalSeconds % 3600) / 60).toString().padStart(2, '0');
+                const s = (totalSeconds % 60).toString().padStart(2, '0');
+                timerEl.innerText = `${h}:${m}:${s}`;
+                if (totalSeconds < 300) timerEl.classList.add('text-red-600', 'animate-pulse');
+            }, 1000);
         }
 
-        document.getElementById("liveExamTitle").innerText = examData.title;
-        examStats.timeLimitMinutes = examData.time_limit_minutes;
+        function renderQuestions(questions) {
+            const container = document.getElementById('questionsContainer');
+            let html = '';
 
-        // Format timer display initially before starting
-        const h = Math.floor(examData.time_limit_minutes / 60)
-          .toString()
-          .padStart(2, "0");
-        const m = (examData.time_limit_minutes % 60)
-          .toString()
-          .padStart(2, "0");
-        document.getElementById("examTimer").innerText = `${h}:${m}:00`;
-
-        // Fetch Questions
-        const { data: questions, error: qError } = await supabaseClient
-          .from("questions")
-          .select("*")
-          .eq("exam_id", examId);
-        if (!questions || questions.length === 0) {
-          document.getElementById("questionsContainer").innerHTML =
-            "<p class='text-center mt-10 text-gray-500'>No questions found in this exam.</p>";
-          document.getElementById("instructionsModal").classList.add("hidden"); // Unlock UI
-          document.getElementById("examContainer").classList.remove("blur-bg");
-          return;
-        }
-
-        examStats.totalQuestions = questions.length;
-        document.getElementById("liveExamProgress").innerText =
-          `0 / ${questions.length} Passed`;
-
-        renderQuestions(questions);
-      };
-
-      // Modal Action: Start Exam
-      function beginExam() {
-        document.getElementById("instructionsModal").classList.add("hidden");
-        document.getElementById("examContainer").classList.remove("blur-bg");
-
-        examStats.startTime = Date.now();
-        startTimer(examStats.timeLimitMinutes);
-      }
-
-      function startTimer(minutes) {
-        let totalSeconds = minutes * 60;
-        const timerEl = document.getElementById("examTimer");
-
-        examTimerInterval = setInterval(() => {
-          if (totalSeconds <= 0) {
-            clearInterval(examTimerInterval);
-            submitFinalExam();
-            return;
-          }
-          totalSeconds--;
-          const h = Math.floor(totalSeconds / 3600)
-            .toString()
-            .padStart(2, "0");
-          const m = Math.floor((totalSeconds % 3600) / 60)
-            .toString()
-            .padStart(2, "0");
-          const s = (totalSeconds % 60).toString().padStart(2, "0");
-          timerEl.innerText = `${h}:${m}:${s}`;
-          if (totalSeconds < 300)
-            timerEl.classList.add("text-red-600", "animate-pulse");
-        }, 1000);
-      }
-
-      function renderQuestions(questions) {
-        const container = document.getElementById("questionsContainer");
-        let html = "";
-
-        questions.forEach((q, index) => {
-          examStats.questionsData[q.id] = { ...q, passed: false, totalRuns: 0 };
-
-          html += `
+            questions.forEach((q, index) => {
+                const isMCQ = q.type === 'mcq';
+                examStats.questionsData[q.id] = { ...q, passed: false, totalRuns: 0 };
+                
+                html += `
                 <div class="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100" id="card-${q.id}">
                     <div class="flex flex-col md:flex-row justify-between md:items-center mb-6 gap-4">
-                        <h3 class="text-2xl font-extrabold text-[#1a1a1a]">Q${index + 1}. ${q.title}</h3>
+                        <div class="flex items-center">
+                            <h3 class="text-2xl font-extrabold text-[#1a1a1a]">Q${index+1}. ${q.title}</h3>
+                            ${isMCQ ? '<span class="bg-orange-100 text-orange-800 text-[10px] px-2 py-1 rounded uppercase font-bold ml-3 tracking-wider">MCQ</span>' : '<span class="bg-blue-100 text-blue-800 text-[10px] px-2 py-1 rounded uppercase font-bold ml-3 tracking-wider">Code</span>'}
+                        </div>
                         <div class="flex items-center space-x-3">
                             <span id="attempts-${q.id}" class="text-xs font-bold text-gray-400 uppercase tracking-wider">Attempts: 0</span>
                             <span id="status-${q.id}" class="bg-gray-100 text-gray-500 px-4 py-1.5 rounded-full text-sm font-bold border border-gray-200 shadow-sm">PENDING</span>
@@ -441,83 +273,121 @@
                     
                     <p class="text-gray-700 mb-6 bg-[#f4f3ef] p-5 rounded-2xl border border-gray-200 leading-relaxed">${q.description}</p>
                     
-                    ${
-                      q.sample_case || q.sample_output
-                        ? `
-                    <div class="bg-gray-50 p-5 rounded-2xl border border-gray-200 mb-6 font-mono text-sm text-gray-700 space-y-4">
-                        ${q.sample_case ? `<div><strong class="text-gray-900 font-sans uppercase text-xs tracking-wider">Sample Input:</strong><br><span class="block mt-1 whitespace-pre-wrap">${q.sample_case}</span></div>` : ""}
-                        ${q.sample_output ? `<div><strong class="text-gray-900 font-sans uppercase text-xs tracking-wider">Expected Output:</strong><br><span class="block mt-1 whitespace-pre-wrap">${q.sample_output}</span></div>` : ""}
-                    </div>
-                    `
-                        : ""
-                    }
-                    
-                    <div id="editor-${q.id}" class="monaco-container mb-4 shadow-inner"></div>
+                    <!-- MCQ View -->
+                    ${isMCQ ? `
+                        <div class="space-y-3 mb-8">
+                            ${(q.options || []).map((opt, i) => `
+                                <label class="flex items-center relative cursor-pointer group">
+                                    <input type="radio" name="mcq-${q.id}" value="${i}" class="peer sr-only">
+                                    <div class="w-full border-2 border-gray-200 rounded-2xl p-4 transition-all group-hover:border-gray-300">
+                                        <div class="flex items-center">
+                                            <div class="w-6 h-6 rounded-full border-2 border-gray-300 mr-4 flex items-center justify-center peer-checked:border-[#7a8b76]">
+                                                <div class="w-3 h-3 bg-[#7a8b76] rounded-full opacity-0 transition-opacity peer-checked:opacity-100 hidden"></div>
+                                            </div>
+                                            <span class="text-gray-700 text-lg group-hover:text-black">${opt}</span>
+                                        </div>
+                                    </div>
+                                </label>
+                            `).join('')}
+                        </div>
+                    ` : ''}
+
+                    <!-- Code Specific View -->
+                    ${!isMCQ ? `
+                        ${q.sample_case || q.sample_output ? `
+                        <div class="bg-gray-50 p-5 rounded-2xl border border-gray-200 mb-6 font-mono text-sm text-gray-700 space-y-4">
+                            ${q.sample_case ? `<div><strong class="text-gray-900 font-sans uppercase text-xs tracking-wider">Sample Input:</strong><br><span class="block mt-1 whitespace-pre-wrap">${q.sample_case}</span></div>` : ''}
+                            ${q.sample_output ? `<div><strong class="text-gray-900 font-sans uppercase text-xs tracking-wider">Expected Output:</strong><br><span class="block mt-1 whitespace-pre-wrap">${q.sample_output}</span></div>` : ''}
+                        </div>
+                        ` : ''}
+                        
+                        <div id="editor-${q.id}" class="monaco-container mb-4 shadow-inner"></div>
+                    ` : ''}
                     
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mt-6 gap-4">
-                        <button onclick="evaluateCode('${q.id}')" id="btn-eval-${q.id}" class="bg-[#1a1a1a] text-white px-8 py-3.5 rounded-2xl font-bold hover:bg-[#7a8b76] transition-colors flex items-center shrink-0 shadow-lg group">
-                            <svg class="w-5 h-5 mr-2 transform group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path></svg>
-                            <span>Run & Evaluate</span>
-                        </button>
+                        ${isMCQ ? `
+                            <button onclick="evaluateMCQ('${q.id}')" id="btn-eval-${q.id}" class="bg-[#1a1a1a] text-white px-8 py-3.5 rounded-2xl font-bold hover:bg-[#7a8b76] transition-colors flex items-center shrink-0 shadow-lg">
+                                <span>Evaluate Answer</span>
+                            </button>
+                        ` : `
+                            <button onclick="evaluateCode('${q.id}')" id="btn-eval-${q.id}" class="bg-[#1a1a1a] text-white px-8 py-3.5 rounded-2xl font-bold hover:bg-[#7a8b76] transition-colors flex items-center shrink-0 shadow-lg group">
+                                <svg class="w-5 h-5 mr-2 transform group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path></svg>
+                                <span>Run & Evaluate Code</span>
+                            </button>
+                        `}
                         <div id="msg-${q.id}" class="text-sm font-medium w-full sm:text-right"></div>
                     </div>
+                    
                     <div id="console-${q.id}" class="mt-4 bg-[#1e1e1e] text-gray-300 font-mono text-sm p-5 rounded-2xl hidden whitespace-pre-wrap max-h-[250px] overflow-auto shadow-inner border border-gray-800"></div>
                 </div>`;
-        });
+            });
 
-        container.innerHTML = html;
+            container.innerHTML = html;
 
-        require.config({
-          paths: {
-            vs: "https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.36.1/min/vs",
-          },
-        });
-        require(["vs/editor/editor.main"], function () {
-          questions.forEach((q) => {
-            window.monacoEditors[q.id] = monaco.editor.create(
-              document.getElementById(`editor-${q.id}`),
-              {
-                value: q.skeleton_code,
-                language: "java",
-                theme: "vs-light",
-                minimap: { enabled: false },
-              },
-            );
-          });
-        });
-      }
+            require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.36.1/min/vs' }});
+            require(['vs/editor/editor.main'], function () {
+                questions.forEach(q => {
+                    if(q.type !== 'mcq') {
+                        window.monacoEditors[q.id] = monaco.editor.create(document.getElementById(`editor-${q.id}`), {
+                            value: q.skeleton_code, language: 'java', theme: 'vs-light', minimap: { enabled: false }
+                        });
+                    }
+                });
+            });
+        }
 
-      // Connects to the API to simulate a compiler and verify the overall test logic
-      async function evaluateCode(qId) {
-        const btnEval = document.getElementById(`btn-eval-${qId}`);
-        const consoleEl = document.getElementById(`console-${qId}`);
-        const msgEl = document.getElementById(`msg-${qId}`);
-        const attemptsEl = document.getElementById(`attempts-${qId}`);
+        // --- MCQ EVALUATION ---
+        function evaluateMCQ(qId) {
+            const qData = examStats.questionsData[qId];
+            const selectedOpt = document.querySelector(`input[name="mcq-${qId}"]:checked`);
+            
+            if (!selectedOpt) {
+                alert("Please select an option before evaluating.");
+                return;
+            }
 
-        const qData = examStats.questionsData[qId];
-        const code = window.monacoEditors[qId].getValue();
+            // Track attempts
+            qData.totalRuns += 1;
+            document.getElementById(`attempts-${qId}`).innerText = `Attempts: ${qData.totalRuns}`;
 
-        // Track evaluations for final score
-        qData.totalRuns += 1;
-        attemptsEl.innerText = `Attempts: ${qData.totalRuns}`;
+            // Check correct option
+            if (selectedOpt.value === qData.correct_option) {
+                setResult(qId, true, "Correct Answer!");
+            } else {
+                setResult(qId, false, "Incorrect Answer. Try again.");
+            }
+        }
 
-        btnEval.innerHTML = `<div class="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent mr-2"></div>Evaluating...`;
-        btnEval.disabled = true;
-        btnEval.classList.add("opacity-80");
-        consoleEl.classList.remove("hidden");
-        consoleEl.innerText = "Running code and verifying test cases...\n";
+        // --- CODE EVALUATION ---
+        async function evaluateCode(qId) {
+            const btnEval = document.getElementById(`btn-eval-${qId}`);
+            const consoleEl = document.getElementById(`console-${qId}`);
+            const msgEl = document.getElementById(`msg-${qId}`);
+            const attemptsEl = document.getElementById(`attempts-${qId}`);
+            
+            const qData = examStats.questionsData[qId];
+            const code = window.monacoEditors[qId].getValue();
 
-        try {
-          const codePhrasesStr =
-            qData.required_code_phrases?.join(", ") || "None required";
-          const outputPhrasesStr =
-            qData.required_output_phrases?.join(", ") || "None required";
+            qData.totalRuns += 1;
+            attemptsEl.innerText = `Attempts: ${qData.totalRuns}`;
 
-          const prompt = `[SYSTEM INSTRUCTION: You are a strict Java compiler and automated test runner. Return ONLY 'PASSED' or 'FAILED: [reason]'. No hints, no conversational text.]
+            btnEval.innerHTML = `<div class="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent mr-2"></div>Evaluating...`; 
+            btnEval.disabled = true;
+            btnEval.classList.add('opacity-80');
+            consoleEl.classList.remove('hidden'); 
+            consoleEl.innerText = "Running code and verifying test cases...\n";
+
+            try {
+                const codePhrasesStr = qData.required_code_phrases?.join(', ') || 'None required';
+                const outputPhrasesStr = qData.required_output_phrases?.join(', ') || 'None required';
+                
+                const prompt = `[SYSTEM INSTRUCTION: You are a strict Java compiler and automated test runner. Return ONLY 'PASSED' or 'FAILED: [reason]'. No hints, no conversational text.]
 
 You are evaluating a student's Java code for an exam.
 Question Title: ${qData.title}
 Question Description: ${qData.description}
+Required Code Phrases to be used: ${codePhrasesStr}
+Expected Output Results: ${outputPhrasesStr}
 
 Student's Submitted Code:
 \`\`\`java
@@ -527,146 +397,124 @@ ${code}
 Evaluate the code strictly.
 Rule 1: If completely correct, fulfills all constraints, and passes expected outputs, reply exactly with "PASSED".
 Rule 2: If there is a syntax error, reply strictly in this format: "FAILED: Syntax error on line [Line Number]: '[snippet of the code with the error]'".
-Rule 3: If there is a logical error (e.g., fails for a specific edge case or condition), do NOT give hints like "missing logic for even numbers". Instead, provide a failure message like a unit test: "FAILED: Test cases have not passed for input '[specify an exact input that fails]'".
-Rule 4: If a required phrase is missing, reply strictly with "FAILED: Missing required code construct."
-Do NOT provide hints, corrected code, or explanations.`;
+Rule 3: If there is a logical error, provide a failure message like a unit test: "FAILED: Test cases have not passed for input '[specify an exact input that fails]'".
+Rule 4: If a required phrase is missing, reply strictly with "FAILED: Missing required code construct."`;
 
-          // SECURE CALL: Sending prompt to Vercel Backend
-          const res = await fetch("/api/evaluate", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ prompt: prompt }),
-          });
+                // SECURE CALL: Sending prompt to Vercel Backend
+                const res = await fetch('/api/evaluate', {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ prompt: prompt })
+                });
+                
+                if (!res.ok) throw new Error(`Server Error: ${res.status}`);
 
-          if (!res.ok) throw new Error(`Server Error: ${res.status}`);
+                const data = await res.json();
+                const resultText = data.result || "FAILED: Unable to evaluate.";
+                
+                consoleEl.innerText += "\n[EVALUATION RESULT]\n" + resultText;
 
-          const data = await res.json();
-          const resultText = data.result || "FAILED: Unable to evaluate.";
+                if (resultText.startsWith("PASSED")) {
+                    setResult(qId, true, "All checks passed!");
+                } else {
+                    const reason = resultText.replace("FAILED:", "").trim();
+                    setResult(qId, false, reason || "Test cases failed");
+                }
 
-          consoleEl.innerText += "\n[EVALUATION RESULT]\n" + resultText;
-
-          if (resultText.startsWith("PASSED")) {
-            setResult(qId, true, "All checks passed!");
-          } else {
-            const reason = resultText.replace("FAILED:", "").trim();
-            setResult(qId, false, reason || "Test cases failed");
-          }
-        } catch (e) {
-          setResult(qId, false, "Verification Error");
-          consoleEl.innerText += "\n[ERROR]\n" + e.message;
-        } finally {
-          btnEval.innerHTML = `<svg class="w-5 h-5 mr-2 transform group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path></svg><span>Run & Evaluate</span>`;
-          btnEval.disabled = false;
-          btnEval.classList.remove("opacity-80");
-        }
-      }
-
-      function setResult(qId, passed, message) {
-        const statusEl = document.getElementById(`status-${qId}`);
-        const msgEl = document.getElementById(`msg-${qId}`);
-        const cardEl = document.getElementById(`card-${qId}`);
-
-        if (passed) {
-          statusEl.innerText = "PASSED";
-          statusEl.className =
-            "bg-green-100 text-green-700 px-4 py-1.5 rounded-full text-sm font-bold shadow-sm";
-          msgEl.innerText = message;
-          msgEl.className = "text-sm font-bold text-green-600";
-          cardEl.classList.add(
-            "ring-2",
-            "ring-green-400",
-            "border-transparent",
-          );
-
-          if (!examStats.questionsData[qId].passed) {
-            examStats.passedQuestions++;
-            examStats.questionsData[qId].passed = true;
-          }
-        } else {
-          statusEl.innerText = "FAILED";
-          statusEl.className =
-            "bg-red-100 text-red-700 px-4 py-1.5 rounded-full text-sm font-bold shadow-sm";
-          msgEl.innerText = message;
-          msgEl.className = "text-sm font-bold text-red-600";
-          cardEl.classList.remove(
-            "ring-2",
-            "ring-green-400",
-            "border-transparent",
-          );
-
-          if (examStats.questionsData[qId].passed) {
-            examStats.passedQuestions--;
-            examStats.questionsData[qId].passed = false;
-          }
-        }
-        document.getElementById("liveExamProgress").innerText =
-          `${examStats.passedQuestions} / ${examStats.totalQuestions} Passed`;
-      }
-
-      // Anti-Cheating
-      document.addEventListener("visibilitychange", () => {
-        if (
-          document.visibilityState === "hidden" &&
-          !document
-            .getElementById("instructionsModal")
-            .classList.contains("hidden") === false &&
-          document.getElementById("resultsOverlay").classList.contains("hidden")
-        ) {
-          recordStrike("You switched tabs!");
-        }
-      });
-
-      function recordStrike(msg) {
-        examStats.warningCount++;
-        alert(
-          `ANTI-CHEATING WARNING ${examStats.warningCount}/${MAX_WARNINGS}: ${msg}`,
-        );
-        if (examStats.warningCount >= MAX_WARNINGS) {
-          submitFinalExam();
-        }
-      }
-
-      // Final Submission & Report Generation
-      async function submitFinalExam() {
-        clearInterval(examTimerInterval);
-        document.getElementById("examContainer").style.display = "none";
-
-        const resultsModal = document.getElementById("resultsOverlay");
-        resultsModal.classList.remove("hidden");
-
-        const timeTakenSec = Math.floor(
-          (Date.now() - examStats.startTime) / 1000,
-        );
-        const m = Math.floor(timeTakenSec / 60);
-        const s = timeTakenSec % 60;
-
-        document.getElementById("resultScore").innerText =
-          `${examStats.passedQuestions}/${examStats.totalQuestions}`;
-        document.getElementById("resultTime").innerText = `${m}m ${s}s`;
-        document.getElementById("resultWarnings").innerText =
-          examStats.warningCount;
-
-        await generateFinalReport(timeTakenSec);
-      }
-
-      async function generateFinalReport(timeTakenSec) {
-        // Prepare breakdown of attempts
-        let breakdown = [];
-        for (let id in examStats.questionsData) {
-          const q = examStats.questionsData[id];
-          breakdown.push(
-            `- Question: "${q.title}" | Status: ${q.passed ? "Passed" : "Failed"} | Attempts: ${q.totalRuns}`,
-          );
+            } catch (e) {
+                setResult(qId, false, "Verification Error");
+                consoleEl.innerText += "\n[ERROR]\n" + e.message;
+            } finally {
+                btnEval.innerHTML = `<svg class="w-5 h-5 mr-2 transform group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path></svg><span>Run & Evaluate Code</span>`; 
+                btnEval.disabled = false;
+                btnEval.classList.remove('opacity-80');
+            }
         }
 
-        const prompt = `You are an automated exam evaluator system generating a final report for a student.
+        // --- RESULTS UI HANDLING ---
+        function setResult(qId, passed, message) {
+            const statusEl = document.getElementById(`status-${qId}`);
+            const msgEl = document.getElementById(`msg-${qId}`);
+            const cardEl = document.getElementById(`card-${qId}`);
+            
+            if (passed) {
+                statusEl.innerText = "PASSED"; 
+                statusEl.className = "bg-green-100 text-green-700 px-4 py-1.5 rounded-full text-sm font-bold shadow-sm";
+                msgEl.innerText = message; 
+                msgEl.className = "text-sm font-bold text-green-600";
+                cardEl.classList.add('ring-2', 'ring-green-400', 'border-transparent');
+                
+                if (!examStats.questionsData[qId].passed) { 
+                    examStats.passedQuestions++; 
+                    examStats.questionsData[qId].passed = true; 
+                }
+            } else {
+                statusEl.innerText = "FAILED"; 
+                statusEl.className = "bg-red-100 text-red-700 px-4 py-1.5 rounded-full text-sm font-bold shadow-sm";
+                msgEl.innerText = message; 
+                msgEl.className = "text-sm font-bold text-red-600";
+                cardEl.classList.remove('ring-2', 'ring-green-400', 'border-transparent');
+
+                if (examStats.questionsData[qId].passed) { 
+                    examStats.passedQuestions--; 
+                    examStats.questionsData[qId].passed = false; 
+                }
+            }
+            document.getElementById('liveExamProgress').innerText = `${examStats.passedQuestions} / ${examStats.totalQuestions} Passed`;
+        }
+
+        // Anti-Cheating
+        document.addEventListener("visibilitychange", () => {
+            if (!examStats.antiCheatEnabled) return;
+            
+            if (document.visibilityState === 'hidden' && !document.getElementById('instructionsModal').classList.contains('hidden') === false && document.getElementById('resultsOverlay').classList.contains('hidden')) {
+                recordStrike("You switched tabs!");
+            }
+        });
+
+        function recordStrike(msg) {
+            examStats.warningCount++;
+            alert(`ANTI-CHEATING WARNING ${examStats.warningCount}/${MAX_WARNINGS}: ${msg}`);
+            if (examStats.warningCount >= MAX_WARNINGS) {
+                submitFinalExam();
+            }
+        }
+
+        // Final Submission & Report Generation
+        async function submitFinalExam() {
+            clearInterval(examTimerInterval);
+            document.getElementById('examContainer').style.display = 'none';
+            
+            const resultsModal = document.getElementById('resultsOverlay');
+            resultsModal.classList.remove('hidden');
+            
+            const timeTakenSec = Math.floor((Date.now() - examStats.startTime) / 1000);
+            const m = Math.floor(timeTakenSec / 60);
+            const s = timeTakenSec % 60;
+            
+            document.getElementById('resultScore').innerText = `${examStats.passedQuestions}/${examStats.totalQuestions}`;
+            document.getElementById('resultTime').innerText = `${m}m ${s}s`;
+            document.getElementById('resultWarnings').innerText = examStats.warningCount;
+
+            await generateFinalReport(timeTakenSec);
+        }
+
+        async function generateFinalReport(timeTakenSec) {
+            let breakdown = [];
+            for (let id in examStats.questionsData) {
+                const q = examStats.questionsData[id];
+                const typeStr = q.type === 'mcq' ? "MCQ" : "Coding";
+                breakdown.push(`- Question: "${q.title}" [${typeStr}] | Status: ${q.passed ? 'Passed' : 'Failed'} | Attempts: ${q.totalRuns}`);
+            }
+
+            const prompt = `You are an automated exam evaluator system generating a final report for a student.
 Student Name: ${examStats.studentName}
 Overall Result: ${examStats.passedQuestions}/${examStats.totalQuestions} questions passed
 Time Taken: ${timeTakenSec} seconds
 Anti-cheating Warnings: ${examStats.warningCount}
 
 Question Performance Breakdown:
-${breakdown.join("\n")}
+${breakdown.join('\n')}
 
 Task:
 1. Calculate an "Evaluation Score" out of 10. A perfect 10 means they passed all questions with very few attempts and no warnings. Deduct points proportionally for failed questions, high attempt counts, or warnings.
@@ -678,36 +526,31 @@ You must respond ONLY with a valid JSON object matching this schema. Do not use 
   "feedback": "string"
 }`;
 
-        try {
-          // SECURE CALL: Sending prompt to Vercel Backend
-          const res = await fetch("/api/report", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ prompt: prompt }),
-          });
+            try {
+                // SECURE CALL: Sending prompt to Vercel Backend
+                const res = await fetch('/api/report', {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ prompt: prompt })
+                });
 
-          if (!res.ok) throw new Error("Failed to fetch report from server.");
+                if (!res.ok) throw new Error("Failed to fetch report from server.");
 
-          const evalResult = await res.json();
+                const evalResult = await res.json();
 
-          // Update UI with results
-          document.getElementById("evaluationScore").innerText =
-            evalResult.score;
-          document.getElementById("feedbackText").innerText =
-            `"${evalResult.feedback}"`;
-        } catch (err) {
-          console.error("Report generation failed:", err);
-          document.getElementById("evaluationScore").innerText = "-";
-          document.getElementById("feedbackText").innerText =
-            "Unable to generate report at this time. Network or API error occurred.";
-        } finally {
-          // Switch UI from Loading to Final Report
-          document
-            .getElementById("resultsLoadingState")
-            .classList.add("hidden");
-          document.getElementById("resultsFinalUI").classList.remove("hidden");
+                // Update UI with results
+                document.getElementById('evaluationScore').innerText = evalResult.score;
+                document.getElementById('feedbackText').innerText = `"${evalResult.feedback}"`;
+
+            } catch (err) {
+                console.error("Report generation failed:", err);
+                document.getElementById('evaluationScore').innerText = "-";
+                document.getElementById('feedbackText').innerText = "Unable to generate report at this time. Network or API error occurred.";
+            } finally {
+                document.getElementById('resultsLoadingState').classList.add('hidden');
+                document.getElementById('resultsFinalUI').classList.remove('hidden');
+            }
         }
-      }
     </script>
-  </body>
+</body>
 </html>
