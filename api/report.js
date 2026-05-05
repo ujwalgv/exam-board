@@ -3,14 +3,13 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed" });
 
   // Safely extract the key and remove any accidental whitespace or quotes
-  let rawKey = process.env.GEMINI_API_KEY_2 || "";
+  let rawKey = process.env.GEMINI_API_KEY || "";
   const apiKey = rawKey.replace(/['"]/g, "").trim();
 
   if (!apiKey) {
-    return res.status(500).json({
-      error:
-        "Server Configuration Error: GEMINI_API_KEY_2 is missing in Vercel.",
-    });
+    return res
+      .status(500)
+      .json({ error: "Gemini Network Error: API Key configuration missing." });
   }
 
   const { prompt } = req.body;
@@ -41,14 +40,16 @@ export default async function handler(req, res) {
     const data = await response.json();
 
     if (!response.ok) {
-      return res.status(500).json({
-        error: `Gemini API Error: ${data.error?.message || response.statusText}`,
-      });
+      return res
+        .status(500)
+        .json({ error: "Gemini Network Error: Unable to generate report." });
     }
 
     const evalResult = JSON.parse(data.candidates[0].content.parts[0].text);
     res.status(200).json(evalResult);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res
+      .status(500)
+      .json({ error: "Gemini Network Error: Unable to generate report." });
   }
 }
