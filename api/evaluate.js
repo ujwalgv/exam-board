@@ -3,6 +3,16 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed" });
 
   const apiKey = process.env.GEMINI_API_KEY;
+
+  // Check if the key is missing on the server
+  if (!apiKey) {
+    return res
+      .status(500)
+      .json({
+        error: "Server Configuration Error: GEMINI_API_KEY is missing.",
+      });
+  }
+
   const { prompt } = req.body;
 
   try {
@@ -18,9 +28,23 @@ export default async function handler(req, res) {
     );
 
     const data = await response.json();
-    const resultText =
-      data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ||
-      "FAILED: Unable to evaluate.";
+
+    // If Gemini rejects the request (e.g., bad API key, quota exceeded)
+    if (!response.ok) {
+      return res
+        .status(500)
+        .json({
+          error: `Gemini API Error: ${data.error?.message || response.statusText}`,
+        });
+    }
+
+    const resultText = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+
+    if (!resultText) {
+      return res
+        .status(500)
+        .json({ error: "Gemini API returned an empty response." });
+    }
 
     res.status(200).json({ result: resultText });
   } catch (error) {

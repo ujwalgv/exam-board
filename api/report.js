@@ -3,6 +3,15 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed" });
 
   const apiKey = process.env.GEMINI_API_KEY;
+
+  if (!apiKey) {
+    return res
+      .status(500)
+      .json({
+        error: "Server Configuration Error: GEMINI_API_KEY is missing.",
+      });
+  }
+
   const { prompt } = req.body;
 
   try {
@@ -29,8 +38,16 @@ export default async function handler(req, res) {
     );
 
     const data = await response.json();
-    const evalResult = JSON.parse(data.candidates[0].content.parts[0].text);
 
+    if (!response.ok) {
+      return res
+        .status(500)
+        .json({
+          error: `Gemini API Error: ${data.error?.message || response.statusText}`,
+        });
+    }
+
+    const evalResult = JSON.parse(data.candidates[0].content.parts[0].text);
     res.status(200).json(evalResult);
   } catch (error) {
     res.status(500).json({ error: error.message });
