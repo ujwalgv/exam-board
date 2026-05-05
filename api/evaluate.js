@@ -1,11 +1,17 @@
 export default async function handler(req, res) {
     if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-    const apiKey = process.env.GEMINI_API_KEY;
+    // Safely extract the key and remove any accidental whitespace or quotes
+    let rawKey = process.env.GEMINI_API_KEY || "";
+    const apiKey = rawKey.replace(/['"]/g, '').trim();
     
-    // Check if the key is missing on the server
+    // Diagnostic Tool: Get the first 5 and last 4 characters of the key to verify which key Vercel is actually using
+    const keyPrefix = apiKey.length > 10 ? apiKey.substring(0, 5) : "NONE";
+    const keySuffix = apiKey.length > 10 ? apiKey.slice(-4) : "NONE";
+    const debugKeyInfo = `${keyPrefix}...${keySuffix}`;
+
     if (!apiKey) {
-        return res.status(500).json({ error: "Server Configuration Error: GEMINI_API_KEY is missing." });
+        return res.status(500).json({ error: "Server Configuration Error: GEMINI_API_KEY is missing in Vercel." });
     }
 
     const { prompt } = req.body;
@@ -21,17 +27,14 @@ export default async function handler(req, res) {
 
         const data = await response.json();
 
-        // If Gemini rejects the request (e.g., bad API key, quota exceeded)
         if (!response.ok) {
-            return res.status(500).json({ error: `Gemini API Error: ${data.error?.message || response.statusText}` });
+            // Appending the debugKeyInfo here so you can verify on your live site!
+            return res.status(500).json({ 
+                error: `Gemini API Error: ${data.error?.message || response.statusText} (Vercel is using Key: ${debugKeyInfo})` 
+            });
         }
 
-        const resultText = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
-        
-        if (!resultText) {
-            return res.status(500).json({ error: "Gemini API returned an empty response." });
-        }
-        
+        const resultText = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "FAILED: Unable to evaluate.";
         res.status(200).json({ result: resultText });
     } catch (error) {
         res.status(500).json({ error: error.message });
