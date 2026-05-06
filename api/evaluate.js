@@ -3,7 +3,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed" });
 
   // Safely extract the key and remove any accidental whitespace or quotes
-  let rawKey = process.env.GEMINI_API_KEY || "";
+  let rawKey = process.env.GEMINI_API_KEY_2 || "";
   const apiKey = rawKey.replace(/['"]/g, "").trim();
 
   if (!apiKey) {
@@ -40,10 +40,8 @@ export default async function handler(req, res) {
       "FAILED: Unable to evaluate.";
     res.status(200).json({ result: resultText });
   } catch (error) {
-    res
-      .status(500)
-      .json({
-        error: "Gemini Network Error: Unable to complete verification.",
-      });
+    res.status(500).json({
+      error: "Gemini Network Error: Unable to complete verification.",
+    });
   }
 }
